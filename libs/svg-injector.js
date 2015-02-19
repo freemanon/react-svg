@@ -290,6 +290,18 @@
         }
       });
 
+      // Fix external images on IE
+      var externalImages = svg.querySelectorAll('image');
+      for(var i=0; i < externalImages.length; i++) {
+        var externalImage = externalImages[i];
+        var src = externalImage.getAttribute('src');
+        if (src) {
+          var im = new Image();
+          im.src = src;
+          externalImage.setAttribute('xlink:href', src);
+        }
+      }
+
       // Make sure any internally referenced clipPath ids and their
       // clip-path references are unique.
       //
