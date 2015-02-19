@@ -39,7 +39,7 @@
       xhr.open(method, url, true);
     } else if (typeof XDomainRequest !== 'undefined') {
       // XDomainRequest for IE.
-      xhr = new XDomainRequest();
+      xhr = new XMLHttpRequest();
       xhr.open(method, url);
     } else {
       // CORS not supported.
