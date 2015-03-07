@@ -438,11 +438,9 @@
           im.onload = cb;
           im.src = src;
         })
-        console.log('b')
         asyncManager.addTaskWhenDone((function(src) {
           this.setAttribute('xlink:href', src);
         }).bind(externalImage, src))
-        console.log('a')
       }
     });
   };
