@@ -202,6 +202,44 @@
     }
   };
 
+  var Async = function(cb) {
+    this.tasksStatus = [];
+    this.tasksWhenDone = [];
+    this.cb = cb;
+  }
+
+  Async.prototype.addTask = function(fn) {
+    var that = this,
+        i = that.tasksStatus.length;
+
+    that.tasksStatus.push(false);
+    var taskCb = function() {
+      that.tasksStatus[i] = true;
+      if(that.isEverythingDone())
+        that.onDone();
+    };
+    fn(taskCb)
+  }
+
+  Async.prototype.addTaskWhenDone = function(fn) {
+    this.tasksWhenDone.push(fn);
+  }
+
+  Async.prototype.isEverythingDone = function() {
+    for(var i = 0; i < this.tasksStatus.length; i++) {
+      if(!this.tasksStatus[i]) return false;
+    }
+    return true;
+  }
+
+  Async.prototype.onDone = function() {
+    var tasks = this.tasksWhenDone;
+    for(var i = 0; i < tasks.length; i++) {
+      tasks[i]();
+    }
+    this.cb();
+  }
+
   // Inject a single element
   var injectElement = function (el, evalScripts, pngFallback, callback) {
 
@@ -289,18 +327,6 @@
           svg.setAttribute(dataAttr.name, dataAttr.value);
         }
       });
-
-      // Fix external images on IE
-      var externalImages = svg.querySelectorAll('image');
-      for(var i=0; i < externalImages.length; i++) {
-        var externalImage = externalImages[i];
-        var src = externalImage.getAttribute('src');
-        if (src) {
-          var im = new Image();
-          im.src = src;
-          externalImage.setAttribute('xlink:href', src);
-        }
-      }
 
       // Make sure any internally referenced clipPath ids and their
       // clip-path references are unique.
@@ -394,7 +420,30 @@
       // Increment the injected count
       injectCount++;
 
-      callback(svg);
+      // Fix external images on IE
+      var asyncManager = new Async(function() {
+        callback(svg);
+      });
+
+      var externalImages = svg.querySelectorAll('image');
+      for(var i=0; i < externalImages.length; i++) {
+        var externalImage = externalImages[i];
+        var src = externalImage.getAttribute('src');
+
+        if (!src)
+          continue;
+
+        asyncManager.addTask(function(cb) {
+          var im = new Image();
+          im.onload = cb;
+          im.src = src;
+        })
+        console.log('b')
+        asyncManager.addTaskWhenDone((function(src) {
+          this.setAttribute('xlink:href', src);
+        }).bind(externalImage, src))
+        console.log('a')
+      }
     });
   };
 
